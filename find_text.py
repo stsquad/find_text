@@ -41,11 +41,27 @@ magic_text=None
 # Heuristic, minimum number of words for 'valid' text
 min_words=20
 
+# Recover file mask and count
+recover_name="ft"
+recover_count=0
+
 def save_recovered_text(text):
     """
     Save text out to a file on the disk
     """
     if verbose: print "save_recovered_text: saving:\n%s\n" % (text)
+    global recover_count
+    
+    outfn = "%s_%08d" % (recover_name, recover_count)
+    if os.path.exists(outfn):
+        print "Not going to overwrite existing data: %s" % (outfn)
+        exit(-1)
+    else:
+        f = open(outfn, "w")
+        f.write(text)
+        f.close()
+    
+    recover_count += 1
     return
 
 def handle_recovered_text(text):
