@@ -1,0 +1,12 @@
+find_text - a simple text finder written in Python
+
+(C) 2010 Alex Bennée
+Licensed under the GPL v3
+
+This program is designed to extract text files from binary dumps (for example dd dumps).
+
+It was written to recover a bunch of wiki text from a hard disk recovery. While tools
+like scalpel, foremost and photorec are brilliant for retrieving structured data they suck
+at plain text as there are no well formed headers to search for.
+
+The program is very simple and fairly dumb and relies on files being sequential in the data dump.
