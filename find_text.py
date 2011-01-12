@@ -41,7 +41,8 @@ magic_text=None
 # Heuristic, minimum number of words for 'valid' text
 min_words=20
 
-# Recover file mask and count
+# Save recovered files, file mask and count
+save=False
 recover_name="ft"
 recover_count=0
 
@@ -49,19 +50,21 @@ def save_recovered_text(text):
     """
     Save text out to a file on the disk
     """
-    if verbose: print "save_recovered_text: saving:\n%s\n" % (text)
-    global recover_count
-    
-    outfn = "%s_%08d" % (recover_name, recover_count)
-    if os.path.exists(outfn):
-        print "Not going to overwrite existing data: %s" % (outfn)
-        exit(-1)
+    if save:
+        global recover_count
+        outfn = "%s_%08d" % (recover_name, recover_count)
+        if os.path.exists(outfn):
+            print "Not going to overwrite existing data: %s" % (outfn)
+            exit(-1)
+        else:
+            f = open(outfn, "w")
+            f.write(text)
+            f.close()
+            
+        recover_count += 1
     else:
-        f = open(outfn, "w")
-        f.write(text)
-        f.close()
-    
-    recover_count += 1
+        print "Found text block:\n%s\nEND" % (text)
+        
     return
 
 def handle_recovered_text(text):
@@ -70,7 +73,6 @@ def handle_recovered_text(text):
     if we want to dump it out.
     """
     #if verbose: print "handle_recovered_text: checking:\n%s\n" % (text)
-    
     if magic_text:
         if text.find(magic_text)>=0:
             save_recovered_text(text)
@@ -130,13 +132,14 @@ def usage():
   -h, --help            : this help message
   -v, --verbose         : verbose output
   -m, --magic="string"  : treat a recovered hunk as valid if it contains this string
+  -s, --save            : save found hunks
 """
 
     sys.exit(1)
 
 if __name__ == "__main__":
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "hvm:", ["help", "verbose", "magic="])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "hvm:s", ["help", "verbose", "magic=", "save"])
     except getopt.GetoptError, err:
         usage()
 
@@ -147,6 +150,8 @@ if __name__ == "__main__":
             verbose=True
         if o in ("-m", "--magic"):
             magic_text=a
+        if o in ("-s", "--save"):
+            save=True
 
     for arg in args:
         process_dump_file(arg)
