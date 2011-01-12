@@ -36,7 +36,7 @@ all_text=re.compile("[\s\x20-\x7e]{512}")
 terminated_text=re.compile("[\s\x20-\x7e]{1,511}\x00")
 
 # Magic text, if set the existence of this in recovered text will cause it to dump
-magic_text=None
+magic_text=[]
 
 # Heuristic, minimum number of words for 'valid' text
 min_words=20
@@ -73,8 +73,14 @@ def handle_recovered_text(text):
     if we want to dump it out.
     """
     #if verbose: print "handle_recovered_text: checking:\n%s\n" % (text)
-    if magic_text:
-        if text.find(magic_text)>=0:
+    
+    if len(magic_text) > 0:
+        missing = 0
+        for m in magic_text: 
+            if text.find(m) < 0:
+                missing = 1
+                break
+        if missing == 0: 
             save_recovered_text(text)
     else:
         words = text.split()
@@ -149,7 +155,7 @@ if __name__ == "__main__":
         if o in ("-v", "--verbose"):
             verbose=True
         if o in ("-m", "--magic"):
-            magic_text=a
+            magic_text.append(a)
         if o in ("-s", "--save"):
             save=True
 
