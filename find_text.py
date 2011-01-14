@@ -35,8 +35,10 @@ verbose=False
 all_text=re.compile("[\s\x20-\x7e]{512}")
 terminated_text=re.compile("[\s\x20-\x7e]{1,511}\x00")
 
-# Magic text, if set the existence of this in recovered text will cause it to dump
-magic_text=[]
+# Match text, if set the existence of this in recovered text will cause it to dump
+match_text=[]
+# nomatch text, if set the existence of this in recovered text will cause it not to dump
+nomatch_text=[]
 
 # Heuristic, minimum number of words for 'valid' text
 min_words=20
@@ -52,7 +54,9 @@ def save_recovered_text(text):
     """
     if save:
         global recover_count
+    
         outfn = "%s_%08d" % (recover_name, recover_count)
+        print "writing %s" % (outfn)
         if os.path.exists(outfn):
             print "Not going to overwrite existing data: %s" % (outfn)
             exit(-1)
@@ -67,6 +71,18 @@ def save_recovered_text(text):
         
     return
 
+def check_for_match(text, word_list):
+    """
+    Check to see if text contains anything in word_list
+    """
+    if len(word_list) > 0:
+        for m in word_list:
+            if text.find(m) >= 0:
+                return True
+            
+    return False
+
+
 def handle_recovered_text(text):
     """
     Do some heuristics on the recovered text and decide
@@ -74,14 +90,24 @@ def handle_recovered_text(text):
     """
     #if verbose: print "handle_recovered_text: checking:\n%s\n" % (text)
     
-    if len(magic_text) > 0:
-        missing = 0
-        for m in magic_text: 
-            if text.find(m) < 0:
-                missing = 1
-                break
-        if missing == 0: 
-            save_recovered_text(text)
+    if len(match_text) > 0:
+        if check_for_match(text, nomatch_text):
+            # found nomatch phrase
+            return
+
+        if not check_for_match(text, match_text):
+            # didn't find match phrase
+            return
+
+        # didn't find nomatch_text and found match_text
+        save_recovered_text(text)
+    elif len(nomatch_text) > 0:
+        if check_for_match(text, nomatch_text):
+            # found nomatch phrase
+            return
+
+        # didn't find nomatch_text
+        save_recovered_text(text)
     else:
         words = text.split()
         if len(words)>min_words:
@@ -135,17 +161,18 @@ def process_dump_file(filename):
 def usage():
     print "%s [-v] [FILE1 [FILE2 [..]]]" % (sys.argv[0])
     print """
-  -h, --help            : this help message
-  -v, --verbose         : verbose output
-  -m, --magic="string"  : treat a recovered hunk as valid if it contains this string
-  -s, --save            : save found hunks
+    -h, --help            : this help message
+    -v, --verbose         : verbose output
+    -m, --match="string"  : treat a recovered hunk as valid if it contains this string
+    -n, --nomatch="string" : treat a recovered hunk as invalid if it contains this string
+    -s, --save            : save found hunks
 """
 
     sys.exit(1)
 
 if __name__ == "__main__":
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "hvm:s", ["help", "verbose", "magic=", "save"])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "hvm:n:s", ["help", "verbose", "match=", "nomatch=", "save"])
     except getopt.GetoptError, err:
         usage()
 
@@ -155,7 +182,9 @@ if __name__ == "__main__":
         if o in ("-v", "--verbose"):
             verbose=True
         if o in ("-m", "--magic"):
-            magic_text.append(a)
+            match_text.append(a)
+        if o in ("-n", "--nomatch"):
+            nomatch_text.append(a)
         if o in ("-s", "--save"):
             save=True
 
