@@ -48,6 +48,9 @@ save=False
 recover_name="ft"
 recover_count=0
 
+# Only display a bit
+brief=False
+
 def save_recovered_text(text):
     """
     Save text out to a file on the disk
@@ -67,7 +70,15 @@ def save_recovered_text(text):
             
         recover_count += 1
     else:
-        print "Found text block:\n%s\nEND" % (text)
+        print "\n\n================================================================="
+        if brief:
+            print "Found text block starting with:\n"
+            lines = text.split("\n")
+            count = min(len(lines), 3)
+            for i in range(count):
+                print lines[i]
+        else:
+            print "Found text block:\n%s\nEND" % (text)
         
     return
 
@@ -165,6 +176,7 @@ def usage():
     -v, --verbose         : verbose output
     -m, --match="string"  : treat a recovered hunk as valid if it contains this string
     -n, --nomatch="string" : treat a recovered hunk as invalid if it contains this string
+    -b, --brief           : only display the first few lines of each block
     -s, --save            : save found hunks
 """
 
@@ -172,7 +184,7 @@ def usage():
 
 if __name__ == "__main__":
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "hvm:n:s", ["help", "verbose", "match=", "nomatch=", "save"])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "hvm:n:sb", ["help", "verbose", "match=", "nomatch=", "save", "brief"])
     except getopt.GetoptError, err:
         usage()
 
@@ -187,6 +199,8 @@ if __name__ == "__main__":
             nomatch_text.append(a)
         if o in ("-s", "--save"):
             save=True
+        if o in ("-b", "--brief"):
+            brief=True
 
     for arg in args:
         process_dump_file(arg)
